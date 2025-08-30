@@ -1,10 +1,17 @@
-# streamlit_app.py
+# app.py
 import streamlit as st
 import pandas as pd
 import joblib
+import os
 
 # ------------------- LOAD TRAINED MODEL -------------------
-pipe = joblib.load("models/accident_model.pkl")
+MODEL_PATH = "models/accident_model.pkl"
+
+if os.path.exists(MODEL_PATH):
+    pipe = joblib.load(MODEL_PATH)
+else:
+    st.error("❌ Model file not found! Please check the path and upload `models/accident_model.pkl`.")
+    st.stop()
 
 # ------------------- PAGE CONFIG -------------------
 st.set_page_config(page_title="Accident Severity Prediction", page_icon="🚦", layout="wide")
@@ -67,4 +74,3 @@ if st.button("🔍 Predict Severity"):
         st.warning(f"⚠️ Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
     else:
         st.error(f"🚨 Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
-
