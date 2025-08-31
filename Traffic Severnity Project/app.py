@@ -4,7 +4,7 @@ import pandas as pd
 import joblib
 
 # ------------------- LOAD TRAINED MODEL -------------------
-pipe = joblib.load("models/accident_model.pkl")
+pipe = joblib.load("accident_model.pkl")
 
 # ------------------- PAGE CONFIG -------------------
 st.set_page_config(page_title="Accident Severity Prediction", page_icon="🚦", layout="wide")
@@ -67,4 +67,5 @@ if st.button("🔍 Predict Severity"):
         st.warning(f"⚠️ Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
     else:
         st.error(f"🚨 Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
+
 
