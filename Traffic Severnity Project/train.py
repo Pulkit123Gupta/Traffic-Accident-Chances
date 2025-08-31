@@ -6,40 +6,31 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
+import os
 
-CSV_PATH = "data_accidents.csv"
-MODEL_PATH = "accident_model.pkl"
+# ------------------- PATHS -------------------
+BASE_DIR = os.path.dirname(__file__)
+CSV_PATH = os.path.join(BASE_DIR, "data_accidents.csv")
+MODEL_PATH = os.path.join(BASE_DIR, "accident_model.pkl")
 
-# Features must match the app exactly
+# ------------------- FEATURES & TARGET -------------------
 FEATURES = [
     "Weather","Road_Type","Road_Condition","Road_Light_Condition","Vehicle_Type",
     "Driver_Age","Driver_Experience","Driver_Alcohol","Speed_Limit",
     "Time_of_Day","Traffic_Density","Number_of_Vehicles"
 ]
-TARGET = "Accident"  # change if your label is named differently
+TARGET = "Accident"  # Label column
 
+# ------------------- LOAD DATA -------------------
 df = pd.read_csv(CSV_PATH)
 
-# If your CSV column names differ, uncomment and edit the mapping:
-# df = df.rename(columns={
-#     "Road Type":"Road_Type",
-#     "Road Condition":"Road_Condition",
-#     "Road Light Condition":"Road_Light_Condition",
-#     "Driver Age":"Driver_Age",
-#     "Driver Experience":"Driver_Experience",
-#     "Driver Alcohol":"Driver_Alcohol",
-#     "Speed Limit":"Speed_Limit",
-#     "Time of Day":"Time_of_Day",
-#     "Traffic Density":"Traffic_Density",
-#     "Number of Vehicles":"Number_of_Vehicles",
-#     # If target differs:
-#     # "Accident_Severity":"Accident",
-# })
+# Optional: rename columns if CSV differs
+# df = df.rename(columns={"Road Type":"Road_Type", "Driver Age":"Driver_Age", ...})
 
-# Basic cleaning
+# Drop missing values
 df = df.dropna(subset=FEATURES + [TARGET]).copy()
 
-# Normalize Driver_Alcohol to 0/1 if it’s text
+# Normalize Driver_Alcohol
 if df["Driver_Alcohol"].dtype == object:
     df["Driver_Alcohol"] = (
         df["Driver_Alcohol"].astype(str).str.strip().str.lower().map(
@@ -50,6 +41,7 @@ if df["Driver_Alcohol"].dtype == object:
 X = df[FEATURES]
 y = df[TARGET]
 
+# ------------------- PREPROCESS -------------------
 cat_cols = ["Weather","Road_Type","Road_Condition","Road_Light_Condition","Vehicle_Type","Time_of_Day","Traffic_Density"]
 num_cols = ["Driver_Age","Driver_Experience","Driver_Alcohol","Speed_Limit","Number_of_Vehicles"]
 
@@ -63,10 +55,12 @@ pipe = Pipeline([
     ("model", RandomForestClassifier(n_estimators=200, random_state=42)),
 ])
 
+# ------------------- TRAIN/TEST SPLIT -------------------
 Xtr, Xte, ytr, yte = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y if y.nunique() > 1 else None
 )
 pipe.fit(Xtr, ytr)
 
+# ------------------- SAVE MODEL -------------------
 joblib.dump(pipe, MODEL_PATH)
 print(f"✅ Model trained and saved as {MODEL_PATH}")
