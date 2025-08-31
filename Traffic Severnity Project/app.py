@@ -2,17 +2,14 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import os
 
-# ------------------- PATHS -------------------
-BASE_DIR = os.path.dirname(__file__)
-MODEL_PATH = os.path.join(BASE_DIR, "accident_model.pkl")
-
-# ------------------- LOAD MODEL -------------------
-pipe = joblib.load(MODEL_PATH)
+# ------------------- LOAD TRAINED MODEL -------------------
+pipe = joblib.load("accident_model.pkl")
 
 # ------------------- PAGE CONFIG -------------------
 st.set_page_config(page_title="Accident Severity Prediction", page_icon="🚦", layout="wide")
+
+# ------------------- APP TITLE -------------------
 st.title("🚦 Traffic Accident Severity Prediction App")
 st.markdown("#### Provide accident details below to predict severity.")
 
@@ -29,20 +26,21 @@ with col1:
 
 with col2:
     vehicle_type = st.selectbox("🚙 Vehicle Type", ["Car", "Truck", "Bus", "Motorcycle", "Bicycle", "Pedestrian"])
-    number_of_vehicles = st.slider("🚘 Number of Vehicles", 1, 1000, 2)
+    number_of_vehicles = st.slider("🚘 Number of Vehicles", 1, 1000, 2)   # Increased max to 1000
     driver_age = st.slider("🧑 Driver Age", 16, 80, 30)
     driver_experience = st.slider("🎓 Driver Experience (years)", 0, 60, 5)
     driver_alcohol = st.selectbox("🍷 Driver under Alcohol influence?", ["No", "Yes"])
     speed_limit = st.slider("🚦 Speed Limit (km/h)", 20, 140, 60)
     time_of_day = st.selectbox("🕒 Time of Day", ["Morning", "Afternoon", "Evening", "Night"])
 
-# ------------------- PREPARE INPUT -------------------
+# Prepare input row
 input_data = pd.DataFrame([{
     "Weather": weather,
     "Road_Condition": road_condition,
     "Road_Type": road_type,
     "Traffic_Density": traffic_density,
     "Road_Light_Condition": road_light,
+    "Accident": accident_type,
     "Vehicle_Type": vehicle_type,
     "Number_of_Vehicles": number_of_vehicles,
     "Driver_Age": driver_age,
@@ -54,15 +52,18 @@ input_data = pd.DataFrame([{
 
 # ------------------- PREDICTION -------------------
 if st.button("🔍 Predict Severity"):
+    probs = pipe.predict_proba(input_data)[0]
     prediction = pipe.predict(input_data)[0]
-    
-    # Get probabilities if classifier supports it
-    if hasattr(pipe, "predict_proba"):
-        probs = pipe.predict_proba(input_data)[0]
-        confidence = max(probs) * 100
-    else:
-        confidence = 100.0
 
-    # Display result
+    # Map numeric labels to text (adjust if dataset uses strings already)
+    severity_map = {0: "Low", 1: "Medium", 2: "High"}
+    severity_label = severity_map.get(int(prediction), str(prediction))
+    confidence = probs[int(prediction)] * 100
+
     st.subheader("Prediction Result")
-    st.info(f"⚡ Predicted Accident Type: **{prediction}** ({confidence:.2f}% confidence)")
+    if severity_label == "Low":
+        st.success(f"✅ Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of no accident !)")
+    elif severity_label == "Medium":
+        st.warning(f"⚠️ Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
+    else:
+        st.error(f"🚨 Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
