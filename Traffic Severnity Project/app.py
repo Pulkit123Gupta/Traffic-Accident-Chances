@@ -5,7 +5,7 @@ import joblib
 import os
 
 # ------------------- LOAD TRAINED MODEL -------------------
-MODEL_PATH = "accident_model.pkl"
+MODEL_PATH = "models/accident_model.pkl"
 
 if os.path.exists(MODEL_PATH):
     pipe = joblib.load(MODEL_PATH)
@@ -74,4 +74,5 @@ if st.button("🔍 Predict Severity"):
         st.warning(f"⚠️ Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
     else:
         st.error(f"🚨 Predicted Severity: **{severity_label}** ({confidence:.2f}% chance of accident !)")
+
 
